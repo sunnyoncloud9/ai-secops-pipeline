@@ -1,41 +1,30 @@
 # Environment
 .env
-.env.local
 *.env
 
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
 *.egg-info/
 dist/
 build/
-.eggs/
-*.egg
 venv/
-env/
 .venv/
+*.log
 
-# Reports (generated at runtime)
-reports/*.md
-reports/*.json
-reports/bandit_report.json
-reports/pip_audit.json
+# Vector store (rebuild on startup)
+vector_store/
+*.faiss
+*.pkl
 
-# Secrets baseline
-.secrets.baseline
+# Reports
+reports/
+audit_exports/
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
-
-# OS
 .DS_Store
-Thumbs.db
 
-# Test coverage
-.coverage
-htmlcov/
-.pytest_cache/
+# AWS
+.aws/credentials
