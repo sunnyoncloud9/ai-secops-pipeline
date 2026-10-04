@@ -256,11 +256,11 @@ async def run_scanner(system_prompt: str = Form(...)):
     results = run_owasp_scan(system_prompt, BEDROCK_MODEL_ID, AWS_REGION)
     return results
 
+
 @app.get("/api/metrics")
 def get_metrics():
     """Pipeline performance metrics."""
-    from datetime import datetime, timezone
-    import time
+    from datetime import datetime
 
     all_decisions = list(pending_alerts.values()) + completed_alerts
 
