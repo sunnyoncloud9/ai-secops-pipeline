@@ -53,8 +53,7 @@ def ensure_table_exists() -> bool:
                 {
                     "IndexName": "alert_id-index",
                     "KeySchema": [{"AttributeName": "alert_id", "KeyType": "HASH"}],
-                    "Projection": {"ProjectionType": "ALL"},
-                    "BillingMode": "PAY_PER_REQUEST"
+                    "Projection": {"ProjectionType": "ALL"}
                 }
             ],
             BillingMode="PAY_PER_REQUEST",

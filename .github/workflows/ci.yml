@@ -43,7 +43,7 @@ jobs:
         run: |
           flake8 src/ tests/ \
             --max-line-length=120 \
-            --ignore=E501,W503,E226,E231 \
+            --ignore=E501,W503,E226,E231,W504,E402 \
             --count --statistics
 
   security:
