@@ -1,6 +1,6 @@
 """
 Audit Logger — DynamoDB
-Immutable audit trail of every AI decision and analyst action.
+Append-only audit trail of every AI decision and analyst action.
 Every triage decision and human approval/rejection is logged.
 
 Author: Sunny Bhardwaj

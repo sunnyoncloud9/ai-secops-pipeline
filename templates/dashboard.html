@@ -91,7 +91,7 @@
   <!-- Pending Alerts -->
   <div class="section-header">
     <h2>⏳ Pending Analyst Review ({{ total_pending }})</h2>
-    <form class="ingest-form" action="/api/ingest" method="post">
+    <form class="ingest-form" action="/api/ingest" method="post" onsubmit="event.preventDefault(); fetch(/api/ingest?batch_size=+this.querySelector('select').value, {method:'POST'}).then(r=>r.json()).then(()=>window.location.reload())">
       <select name="batch_size">
         <option value="1">1 alert</option>
         <option value="3">3 alerts</option>

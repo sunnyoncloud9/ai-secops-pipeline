@@ -11,6 +11,7 @@ Implements OWASP GenAI Top 10 2025 hardening:
 Author: Sunny Bhardwaj
 """
 
+import os
 import json
 import logging
 import re
@@ -51,6 +52,10 @@ valid JSON object using exactly this structure:
 Do not include any text outside the JSON object."""
 
 VALID_ACTIONS = {"BLOCK_IP", "ISOLATE_RESOURCE", "ESCALATE", "SUPPRESS", "MONITOR"}
+# AWS Bedrock Guardrail
+GUARDRAIL_ID = os.environ.get("BEDROCK_GUARDRAIL_ID", "65hj5a5cb7xp")
+GUARDRAIL_VERSION = os.environ.get("BEDROCK_GUARDRAIL_VERSION", "1")
+
 VALID_SEVERITIES = {"CRITICAL", "HIGH", "MEDIUM", "LOW"}
 VALID_CLASSIFICATIONS = {"TRUE_POSITIVE", "FALSE_POSITIVE", "NEEDS_REVIEW"}
 VALID_CONFIDENCE = {"HIGH", "MEDIUM", "LOW"}
@@ -198,26 +203,25 @@ def _fallback_decision(alert: dict, reason: str) -> dict:
     reraise=True
 )
 def _call_bedrock(client, model_id: str, user_prompt: str, max_tokens: int) -> str:
-    """Call Bedrock with retry logic."""
-    body = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": max_tokens,
-        "temperature": 0.0,
-        "system": SYSTEM_PROMPT,
-        "messages": [
-            {"role": "user", "content": user_prompt}
-        ]
-    }
-
-    response = client.invoke_model(
+    """Call Bedrock with Guardrails via Converse API."""
+    response = client.converse(
         modelId=model_id,
-        body=json.dumps(body),
-        contentType="application/json",
-        accept="application/json"
+        system=[{"text": SYSTEM_PROMPT}],
+        messages=[{"role": "user", "content": [{"text": user_prompt}]}],
+        inferenceConfig={"maxTokens": max_tokens, "temperature": 0.0},
+        guardrailConfig={
+            "guardrailIdentifier": GUARDRAIL_ID,
+            "guardrailVersion": GUARDRAIL_VERSION,
+            "trace": "enabled"
+        }
     )
 
-    result = json.loads(response["body"].read())
-    return result["content"][0]["text"]
+    # Check if guardrail blocked the request
+    if response.get("stopReason") == "guardrail_intervened":
+        raise ValueError("Bedrock Guardrail blocked the request — prompt injection or policy violation detected")
+
+    output = response["output"]["message"]["content"][0]["text"]
+    return output
 
 
 def triage_alert(

@@ -43,7 +43,7 @@ Open **http://localhost:8000** — click **+ Ingest Alerts** to pull in simulate
 *CRITICAL S3 exfiltration alert approved → ISOLATE_RESOURCE executed → moved to Completed*
 ![Dashboard Completed](screenshots/4-dashboard-complete.png)
 
-### Immutable Audit Log (DynamoDB)
+### Append-Only Audit Trail (DynamoDB)
 *Every AI decision and analyst action logged*
 ![Audit Log](screenshots/5-audit-log.png)
 
@@ -122,7 +122,7 @@ The pipeline itself is hardened against the **OWASP GenAI Top 10 2025** — prom
                            ▼
 ┌─────────────────────────────────────────────────────────┐
 │   Audit Log (DynamoDB)                                  │
-│   Immutable record of every AI decision + analyst action│
+│   Audit record of every AI decision + analyst action│
 │   Compliance-ready trail for SOC-2, ISO 27001           │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -156,7 +156,7 @@ The pipeline itself is hardened against the **OWASP GenAI Top 10 2025** — prom
 | GET | `/api/alert/{id}` | Alert detail + analyst review UI |
 | POST | `/api/alert/{id}/approve` | Approve AI recommendation + execute action |
 | POST | `/api/alert/{id}/reject` | Reject as false positive |
-| GET | `/audit` | Immutable audit log |
+| GET | `/audit` | Append-only audit trail |
 | GET | `/api/audit` | Audit log as JSON |
 | GET | `/scanner` | OWASP GenAI Top 10 2025 scanner UI |
 | POST | `/api/scanner/run` | Run OWASP scan against a system prompt |
@@ -196,7 +196,7 @@ The pipeline itself is hardened against the **OWASP GenAI Top 10 2025** — prom
 | FAISS + sentence-transformers | RAG vector store for runbook retrieval |
 | FastAPI | REST API + web UI |
 | Jinja2 | HTML templates |
-| DynamoDB | Immutable audit log |
+| DynamoDB | Append-only audit trail |
 | AWS Security Groups | IP blocking |
 | AWS SNS | Escalation notifications |
 | Python 3.11 | Core application |
@@ -218,7 +218,7 @@ ai-secops-pipeline/
 │   ├── response/
 │   │   └── response_engine.py      # AWS response actions (IP block, isolate, SNS)
 │   ├── audit/
-│   │   └── audit_logger.py         # DynamoDB immutable audit trail
+│   │   └── audit_logger.py         # DynamoDB append-only audit trail
 │   ├── scanner/
 │   │   └── owasp_scanner.py        # OWASP GenAI Top 10 2025 scanner
 │   └── main.py                     # FastAPI application
@@ -267,6 +267,36 @@ DYNAMODB_TABLE=ai-secops-audit-log  # Auto-created on startup
 
 ---
 
+
+---
+
+## ⚠️ Architecture & Security Limitations
+
+### What is Simulated vs Production-Ready
+
+| Component | Current State | Production Equivalent |
+|-----------|--------------|----------------------|
+| Alert ingestion | Simulated GuardDuty/CloudTrail/Security Hub findings | Real boto3 calls to AWS security services |
+| IP blocking | Demo-safe simulation (logs the action) | AWS Security Group deny rule via boto3 |
+| Resource isolation | EC2 tag applied (no network change) | VPC isolation, Security Group swap, snapshot |
+| SNS escalation | Real SNS publish ✅ | Real SNS publish ✅ |
+| Bedrock AI triage | Real Amazon Bedrock API ✅ | Real Amazon Bedrock API ✅ |
+| Bedrock Guardrails | Real AWS Guardrail ✅ | Real AWS Guardrail ✅ |
+| RAG runbook retrieval | Real FAISS vector store ✅ | Real FAISS / OpenSearch ✅ |
+| Audit trail | DynamoDB append-only trail ✅ | Add IAM deny on DeleteItem/UpdateItem for true immutability |
+| Authentication | None (demo) | IAM roles, Cognito, or Azure AD |
+| Alert queue | In-memory Python dict | SQS, Redis, or DynamoDB queue |
+
+### Known Limitations
+
+- **Alerts are simulated** — in production, replace `alert_generator.py` with real boto3 calls to `guardduty.list_findings()`, `securityhub.get_findings()`, and CloudTrail Lake queries
+- **Response actions are demo-safe** — `BLOCK_IP` and `ISOLATE_RESOURCE` log and tag but do not modify network topology; add real Security Group and NACL rules for production containment
+- **No authentication** — the web UI has no login; add IAM roles or an identity provider before any production use
+- **In-memory alert queue** — pending alerts are lost on restart; use SQS or DynamoDB for persistence
+- **DynamoDB audit trail is append-only by convention** — true immutability requires IAM deny policies on `DeleteItem` and `UpdateItem`, or S3 Object Lock with WORM storage
+- **IAM credentials in .env** — use IAM roles attached to EC2/ECS tasks in production, never long-term access keys
+
+---
 ## 🔐 Security Notes
 
 - System prompt never logged or exposed to user inputs

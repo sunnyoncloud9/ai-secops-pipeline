@@ -255,3 +255,74 @@ async def run_scanner(system_prompt: str = Form(...)):
     from src.scanner.owasp_scanner import run_owasp_scan
     results = run_owasp_scan(system_prompt, BEDROCK_MODEL_ID, AWS_REGION)
     return results
+
+@app.get("/api/metrics")
+def get_metrics():
+    """Pipeline performance metrics."""
+    from datetime import datetime, timezone
+    import time
+
+    all_decisions = list(pending_alerts.values()) + completed_alerts
+
+    total = len(all_decisions)
+    if total == 0:
+        return {"message": "No data yet — ingest some alerts first"}
+
+    # Classification breakdown
+    tp = sum(1 for a in all_decisions if a["decision"].get("classification") == "TRUE_POSITIVE")
+    fp = sum(1 for a in all_decisions if a["decision"].get("classification") == "FALSE_POSITIVE")
+    nr = sum(1 for a in all_decisions if a["decision"].get("classification") == "NEEDS_REVIEW")
+
+    # Analyst decisions
+    approved = sum(1 for a in completed_alerts if a.get("status") == "APPROVED")
+    rejected = sum(1 for a in completed_alerts if a.get("status") == "REJECTED")
+    total_completed = len(completed_alerts)
+
+    # Risk scores
+    risk_scores = [a["decision"].get("risk_score", 0) for a in all_decisions]
+    avg_risk = sum(risk_scores) / len(risk_scores) if risk_scores else 0
+
+    # Triage latency (time between ingestion and completion)
+    latencies = []
+    for a in completed_alerts:
+        try:
+            ingested = datetime.fromisoformat(a["ingested_at"])
+            completed = datetime.fromisoformat(a["completed_at"])
+            latencies.append((completed - ingested).total_seconds())
+        except Exception:
+            pass
+
+    avg_latency_seconds = sum(latencies) / len(latencies) if latencies else 0
+
+    # Fallback rate
+    fallbacks = sum(1 for a in all_decisions if a["decision"].get("fallback", False))
+
+    return {
+        "total_alerts_triaged": total,
+        "classification_breakdown": {
+            "true_positive": tp,
+            "false_positive": fp,
+            "needs_review": nr,
+            "true_positive_rate": round(tp / total * 100, 1) if total else 0,
+        },
+        "analyst_decisions": {
+            "total_completed": total_completed,
+            "approved": approved,
+            "rejected": rejected,
+            "approval_rate": round(approved / total_completed * 100, 1) if total_completed else 0,
+            "rejection_rate": round(rejected / total_completed * 100, 1) if total_completed else 0,
+            "false_positive_rate": round(rejected / total_completed * 100, 1) if total_completed else 0,
+        },
+        "risk_scores": {
+            "average": round(avg_risk, 1),
+            "high_risk_count": sum(1 for s in risk_scores if s >= 70),
+            "medium_risk_count": sum(1 for s in risk_scores if 40 <= s < 70),
+            "low_risk_count": sum(1 for s in risk_scores if s < 40),
+        },
+        "performance": {
+            "avg_triage_latency_seconds": round(avg_latency_seconds, 1),
+            "ai_fallback_rate": round(fallbacks / total * 100, 1) if total else 0,
+            "guardrail_id": "65hj5a5cb7xp",
+            "model": BEDROCK_MODEL_ID,
+        }
+    }
