@@ -192,6 +192,46 @@
     </tbody>
   </table>
   {% endif %}
+
+  <!-- Metrics Panel -->
+  <div class="section-header" style="margin-top: 32px;">
+    <h2>📊 Pipeline Performance Metrics</h2>
+    <a href="/api/metrics" target="_blank" class="btn btn-secondary btn-sm">View JSON</a>
+  </div>
+  <div class="stats-grid" id="metrics-grid">
+    <div class="stat-card">
+      <div class="value" id="m-tp-rate" style="color: var(--low);">—</div>
+      <div class="label">True Positive Rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" id="m-approval-rate" style="color: var(--accent);">—</div>
+      <div class="label">Analyst Approval Rate</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" id="m-latency" style="color: var(--medium);">—</div>
+      <div class="label">Avg Triage Latency</div>
+    </div>
+    <div class="stat-card">
+      <div class="value" id="m-fallback" style="color: var(--muted);">—</div>
+      <div class="label">AI Fallback Rate</div>
+    </div>
+  </div>
+
+<script>
+async function loadMetrics() {
+  try {
+    const r = await fetch('/api/metrics');
+    const d = await r.json();
+    if (d.message) return; // no data yet
+    document.getElementById('m-tp-rate').textContent = d.classification_breakdown.true_positive_rate + '%';
+    document.getElementById('m-approval-rate').textContent = (d.analyst_decisions.approval_rate || 0) + '%';
+    document.getElementById('m-latency').textContent = d.performance.avg_triage_latency_seconds + 's';
+    document.getElementById('m-fallback').textContent = d.performance.ai_fallback_rate + '%';
+  } catch(e) { console.log('Metrics unavailable'); }
+}
+loadMetrics();
+setInterval(loadMetrics, 10000);
+</script>
 </div>
 </body>
 </html>
