@@ -15,7 +15,7 @@
   h2 { margin-bottom: 16px; font-size: 16px; }
   table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
   th { background: #1c2128; padding: 10px 14px; text-align: left; font-size: 11px; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
-  td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 12px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   tr:last-child td { border-bottom: none; }
   .badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
   .badge-triage { background: rgba(88,166,255,0.15); color: var(--accent); }
@@ -44,36 +44,39 @@
         <th>Risk</th>
         <th>Action</th>
         <th>Status</th>
+        <th>Model</th>
       </tr>
     </thead>
     <tbody>
       {% for log in audit_logs %}
       <tr>
-        <td style="color: var(--muted);">{{ log.timestamp[:19] | replace('T', ' ') }}</td>
+        <td style="color: var(--muted);">{{ (log.get('timestamp', '') or '')[:19] | replace('T', ' ') }}</td>
         <td>
-          {% if log.event_type == 'AI_TRIAGE' %}
+          {% set et = log.get('event_type', '') %}
+          {% if et == 'AI_TRIAGE' %}
           <span class="badge badge-triage">AI Triage</span>
-          {% elif log.event_type == 'ANALYST_DECISION' %}
+          {% elif et == 'ANALYST_DECISION' %}
           <span class="badge badge-analyst">Analyst</span>
-          {% else %}
+          {% elif et == 'RESPONSE_ACTION' %}
           <span class="badge badge-response">Response</span>
+          {% else %}
+          <span style="color: var(--muted);">{{ et or '—' }}</span>
           {% endif %}
         </td>
-        <td><code>{{ log.alert_id[:8] }}...</code></td>
-        <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-          {{ log.alert_type or '—' }}
-        </td>
-        <td>{{ log.ai_classification or log.analyst_action or log.action_taken or '—' }}</td>
-        <td>{{ log.ai_risk_score or '—' }}</td>
-        <td>{{ log.ai_recommended_action or '—' }}</td>
-        <td>{{ log.workflow_status or '—' }}</td>
+        <td><code>{{ (log.get('alert_id', '') or '—')[:8] }}...</code></td>
+        <td title="{{ log.get('alert_type', '') }}">{{ (log.get('alert_type', '') or '—').split(':')[-1] }}</td>
+        <td>{{ log.get('ai_classification', '') or log.get('analyst_action', '') or log.get('action_taken', '') or '—' }}</td>
+        <td>{{ log.get('ai_risk_score', '') or '—' }}</td>
+        <td>{{ log.get('ai_recommended_action', '') or log.get('action_taken', '') or '—' }}</td>
+        <td>{{ log.get('workflow_status', '') or '—' }}</td>
+        <td style="color: var(--muted);">{{ (log.get('ai_model_used', '') or '—').split('.')[-1][:15] }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
   {% else %}
   <div class="empty">
-    <p>No audit log entries yet. DynamoDB table is ready — ingest some alerts to start logging.</p>
+    <p>No audit log entries yet.</p>
   </div>
   {% endif %}
 </div>

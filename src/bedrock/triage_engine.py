@@ -223,8 +223,8 @@ def _call_bedrock(client, model_id: str, user_prompt: str, max_tokens: int) -> s
 def triage_alert(
     alert: dict,
     runbook_context: str,
-    model_id: str = "anthropic.claude-sonnet-4-5-20250929-v1:0",
-    region: str = "us-east-1",
+    model_id: str = "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+    region: str = "us-east-2",
     max_tokens: int = 1024
 ) -> dict:
     """

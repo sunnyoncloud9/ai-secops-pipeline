@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 pending_alerts: dict = {}
 completed_alerts: list = []
 
-BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "anthropic.claude-sonnet-4-5-20250929-v1:0")
-AWS_REGION = os.environ.get("AWS_REGION", "us-east-1")
+BEDROCK_MODEL_ID = os.environ.get("BEDROCK_MODEL_ID", "us.anthropic.claude-haiku-4-5-20251001-v1:0")
+AWS_REGION = os.environ.get("AWS_REGION", "us-east-2")
 
 
 @asynccontextmanager
