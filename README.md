@@ -157,12 +157,12 @@ If the guardrail intervenes, the pipeline fails closed to `NEEDS_REVIEW / ESCALA
 | LLM01 | Prompt Injection | ✅ Input sanitization + Bedrock Guardrail (HIGH strength) |
 | LLM02 | Sensitive Information Disclosure | ✅ Output validation strips sensitive data patterns |
 | LLM03 | Supply Chain | ✅ Dependency audit in CI (pip-audit + Bandit) |
-| LLM04 | Data and Model Poisoning | 🔜 Planned — runbook integrity checks |
+| LLM04 | Data and Model Poisoning | ✅ Runbook integrity checksums (SHA-256) |
 | LLM05 | Improper Output Handling | ✅ Strict schema enforcement, allow-listed action values |
 | LLM06 | Excessive Agency | ✅ Human-in-the-loop required — AI cannot act autonomously |
 | LLM07 | System Prompt Leakage | ✅ System prompt never exposed to user inputs or logged |
-| LLM08 | Vector and Embedding Weaknesses | 🔜 Planned — FAISS index integrity validation |
-| LLM09 | Misinformation | 🔜 Planned — confidence scoring and source attribution |
+| LLM08 | Vector and Embedding Weaknesses | ✅ FAISS index integrity validation |
+| LLM09 | Misinformation | ✅ Source attribution + confidence scoring |
 | LLM10 | Unbounded Consumption | ✅ max_tokens limits, rate limiting, batch size controls |
 
 ---
