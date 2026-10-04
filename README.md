@@ -71,6 +71,27 @@ Open **http://localhost:8000** — click **+ Ingest Alerts** to pull in simulate
 
 The pipeline itself is hardened against the **OWASP GenAI Top 10 2025** — prompt injection prevention, output validation, fail-closed fallback, and system prompt protection are built into every layer.
 
+
+---
+
+## 🛡️ Bedrock Guardrails Integration
+
+The pipeline integrates **real AWS Bedrock Guardrails** (`guardrailId: 65hj5a5cb7xp`, version `2`) on every LLM call via the Converse API:
+
+- **PII Anonymization** — email addresses and AWS access keys detected and anonymized/blocked before reaching the model
+- **Hate Content Filtering** — HIGH strength on both input and output
+- **Prompt Attack Detection** — enabled on input
+
+```python
+guardrailConfig={
+    "guardrailIdentifier": "65hj5a5cb7xp",
+    "guardrailVersion": "2",
+    "trace": "enabled"
+}
+```
+
+If the guardrail intervenes, the pipeline fails closed to `NEEDS_REVIEW / ESCALATE` — never silently drops the alert.
+
 ---
 
 ## 🏗️ Architecture
@@ -133,7 +154,7 @@ The pipeline itself is hardened against the **OWASP GenAI Top 10 2025** — prom
 
 | ID | Vulnerability | Coverage |
 |----|--------------|---------|
-| LLM01 | Prompt Injection | ✅ Input sanitization removes injection patterns before Bedrock call |
+| LLM01 | Prompt Injection | ✅ Input sanitization + Bedrock Guardrail (HIGH strength) |
 | LLM02 | Sensitive Information Disclosure | ✅ Output validation strips sensitive data patterns |
 | LLM03 | Supply Chain | ✅ Dependency audit in CI (pip-audit + Bandit) |
 | LLM04 | Data and Model Poisoning | 🔜 Planned — runbook integrity checks |
@@ -185,6 +206,27 @@ The pipeline itself is hardened against the **OWASP GenAI Top 10 2025** — prom
 - Unencrypted EBS Volume
 - IAM Password Policy Violation
 - CloudTrail Not Enabled
+
+
+---
+
+## 📈 Evaluation Metrics
+
+Live performance metrics available at `GET /api/metrics` and displayed on the SOC dashboard:
+
+| Metric | Description |
+|--------|-------------|
+| **True Positive Rate** | % of alerts classified as TRUE_POSITIVE by the AI |
+| **Analyst Approval Rate** | % of AI recommendations approved by human analyst |
+| **False Positive Rate** | % of alerts rejected by analyst |
+| **Avg Triage Latency** | Seconds from alert ingestion to analyst decision |
+| **AI Fallback Rate** | % of alerts that fell back to safe defaults |
+| **Avg Risk Score** | Mean 0-100 risk score across all triaged alerts |
+
+```bash
+curl http://localhost:8000/api/metrics
+# Returns: classification accuracy, approval rate, latency, fallback rate, guardrail ID
+```
 
 ---
 
@@ -299,7 +341,9 @@ DYNAMODB_TABLE=ai-secops-audit-log  # Auto-created on startup
 ---
 ## 🔐 Security Notes
 
-- System prompt never logged or exposed to user inputs
+- System prompt never logged or exposed to user inputs (LLM07)
+- AWS Bedrock Guardrail `65hj5a5cb7xp` enforces PII protection and content filtering on every API call
+- Guardrail intervention fails closed to ESCALATE — never silently drops alerts
 - All alert fields sanitized before Bedrock API call
 - LLM output validated against strict allow-lists
 - AI cannot take autonomous actions — human approval required for every response
