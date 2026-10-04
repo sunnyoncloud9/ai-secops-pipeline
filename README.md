@@ -23,8 +23,40 @@ make run
 
 Open **http://localhost:8000** — click **+ Ingest Alerts** to pull in simulated GuardDuty/CloudTrail/Security Hub findings and see the full pipeline in action.
 
+
 ---
 
+## 📸 Screenshots
+
+### SOC Dashboard — Live Alert Triage
+![SOC Dashboard](screenshots/1-dashboard.png)
+
+### Alert Detail — AI Triage with Amazon Bedrock
+*Risk score 92/100, TRUE POSITIVE, Confidence: HIGH — GuardDuty S3 data exfiltration alert triaged by Claude Haiku via Bedrock*
+![Alert Detail](screenshots/2-alert-detail.png)
+
+### RAG Runbook Context + Human-in-the-Loop Approval
+*Retrieved data exfiltration runbook via FAISS — analyst must approve before any action executes*
+![Runbook + HITL](screenshots/3-runbook-context.png)
+
+### Dashboard After Analyst Approval
+*CRITICAL S3 exfiltration alert approved → ISOLATE_RESOURCE executed → moved to Completed*
+![Dashboard Completed](screenshots/4-dashboard-complete.png)
+
+### Immutable Audit Log (DynamoDB)
+*Every AI decision and analyst action logged*
+![Audit Log](screenshots/5-audit-log.png)
+
+### REST API — Swagger UI
+![API Swagger](screenshots/6-api-swagger.png)
+
+### OWASP GenAI Top 10 2025 Scanner — 11/11 Passed
+![OWASP Scanner](screenshots/7-owasp-scanner.png)
+
+### OWASP GenAI Top 10 2025 Coverage
+![OWASP Coverage](screenshots/8-owasp-coverage.png)
+
+---
 ## 📌 Overview
 
 **AI-SecOps Pipeline v2** is a complete rewrite that transforms a basic LLM scanner into a production-grade AI-assisted security operations system.
